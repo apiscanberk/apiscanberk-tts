@@ -1,5 +1,3 @@
-import fetch from 'node-fetch';
-
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -10,8 +8,7 @@ export default async function handler(req, res) {
 
   const { text } = req.body;
   const API_KEY = process.env.ELEVENLABS_API_KEY;
-  
-  // HER HESAPTA ÇALIŞAN STANDART SES ID (Yelda/Bella):
+  // Yelda Ses ID: EXAVITQu4vr4VmbeM312
   const VOICE_ID = "EXAVITQu4vr4VmbeM312"; 
 
   try {
@@ -19,8 +16,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: {
         'xi-api-key': API_KEY,
-        'Content-Type': 'application/json',
-        'accept': 'audio/mpeg'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         text: text,
@@ -30,15 +26,15 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      return res.status(response.status).json(errorData);
+      const errorMsg = await response.text();
+      return res.status(response.status).send(errorMsg);
     }
 
     const arrayBuffer = await response.arrayBuffer();
     res.setHeader('Content-Type', 'audio/mpeg');
-    res.send(Buffer.from(arrayBuffer));
+    return res.send(Buffer.from(arrayBuffer));
 
   } catch (error) {
-    res.status(500).send("Sunucu hatası oluştu.");
+    return res.status(500).send("Vercel Hatası: " + error.message);
   }
 }
