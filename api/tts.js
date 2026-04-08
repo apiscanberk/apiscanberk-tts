@@ -1,5 +1,6 @@
+import fetch from 'node-fetch';
+
 export default async function handler(req, res) {
-  // CORS Ayarları
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -9,43 +10,35 @@ export default async function handler(req, res) {
 
   const { text } = req.body;
   const API_KEY = process.env.ELEVENLABS_API_KEY;
-  // Ses ID (Ahmet - Türkçe): pMsS7yD1nuQvSdfp6Mms
-  const VOICE_ID = "pMsS7yD1nuQvSdfp6Mms";
-
-  if (!API_KEY) {
-    console.error("HATA: Vercel üzerinde ELEVENLABS_API_KEY tanımlanmamış!");
-    return res.status(500).json({ error: "API Key eksik" });
-  }
+  
+  // HER HESAPTA ÇALIŞAN STANDART SES ID (Yelda/Bella):
+  const VOICE_ID = "EXAVITQu4vr4VmbeM312"; 
 
   try {
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
       method: 'POST',
       headers: {
         'xi-api-key': API_KEY,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'accept': 'audio/mpeg'
       },
       body: JSON.stringify({
         text: text,
         model_id: "eleven_multilingual_v2",
-        voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.75
-        }
-      })
+        voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+      }),
     });
 
     if (!response.ok) {
-      const errorDetail = await response.text();
-      console.error("ElevenLabs Rejeksiyonu:", errorDetail);
-      return res.status(response.status).send(errorDetail);
+      const errorData = await response.json();
+      return res.status(response.status).json(errorData);
     }
 
-    const audioBuffer = await response.arrayBuffer();
+    const arrayBuffer = await response.arrayBuffer();
     res.setHeader('Content-Type', 'audio/mpeg');
-    return res.send(Buffer.from(audioBuffer));
+    res.send(Buffer.from(arrayBuffer));
 
   } catch (error) {
-    console.error("Vercel Runtime Hatası:", error);
-    return res.status(500).send("Sunucu hatası");
+    res.status(500).send("Sunucu hatası oluştu.");
   }
 }
